@@ -7,10 +7,6 @@
 
 Sapiens é um protótipo de um assistente virtual inteligente, projetado para resolver o problema de perda de conhecimento em ambientes corporativos. A aplicação centraliza documentos internos (texto e desenhos técnicos) e permite que os usuários façam perguntas em linguagem natural, recebendo respostas precisas e contextuais geradas por uma IA multimodal de ponta.
 
-## Demonstração
-
-* **Dica:** Grave um GIF rápido da tela mostrando o upload de um PDF e de uma imagem e a IA respondendo. Ferramentas como **ScreenToGif** ou **Giphy Capture** são ótimas para isso. Depois, suba o GIF para o seu repositório e coloque o link aqui.*
-
 ![Demonstração do Sapiens em Ação](caminho/para/seu/gif.gif)
 
 ## ✨ Funcionalidades Principais
