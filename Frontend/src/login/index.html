@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="style.css">
+    <title>TecnoTooling</title>
+</head>
+<body>
+    <div class="login-screen" id="loginScreen">
+        <div class="login-container">
+            <img class="logo-img" src="../assets/tecnotooling.png" alt="">
+            <h1 class="login-title">Bem-vindo ao Sapiens IA</h1>
+            
+            <div class="access-level-selector">
+                <div class="access-level-option selected" onclick="selectAccessLevel('standard')" id="standardLevel">
+                    <div class="access-level-icon">🛠️</div>
+                    <div class="access-level-title">Operacional</div>
+                </div>
+                
+                <div class="access-level-option" onclick="selectAccessLevel('premium')" id="premiumLevel">
+                    <div class="access-level-icon">📊</div>
+                    <div class="access-level-title">Administrativo</div>
+                </div>
+            </div>
+            
+            <form class="login-form" onsubmit="handleLogin(event)">
+                <div class="form-group">
+                    <label class="form-label" for="email">Email</label>
+                    <input 
+                        type="email" 
+                        id="email" 
+                        class="form-input" 
+                        placeholder="seu@email.com"
+                        required
+                    >
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label" for="password">Senha</label>
+                    <input 
+                        type="password" 
+                        id="password" 
+                        class="form-input" 
+                        placeholder="••••••••"
+                        required
+                    >
+                </div>
+                
+                <button type="submit" class="login-button">Entrar</button>
+            </form>
+            
+            <div class="error-message" id="errorMessage"></div>
+
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>

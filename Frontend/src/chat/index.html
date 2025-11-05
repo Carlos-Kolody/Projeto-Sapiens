@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="../chat/style.css">
+    <title>Sapiens - TecnoTooling</title>
+</head>
+<body>
+    <div class="app-container" id="appContainer">
+        <header class="header">
+            <div class="header-logo">
+                <img class="logo" src="../assets/tecnotooling.png" alt="Logo TecnoTooling">
+            </div>
+            <nav class="header-nav">
+                <a href="../login/index.html" class="nav-link">Sair (Login)</a>
+                <a href="#" class="nav-link">Documentação</a>
+                <a href="#" class="nav-link" id="newChatBtn">+ Nova Conversa</a>
+                <button class="theme-toggle" id="themeToggle">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M12 3c-4.97 0-9 4.03-9 9s4.03 9 9 9 9-4.03 9-9c0-.46-.04-.92-.1-1.36-.98 1.37-2.58 2.26-4.4 2.26-2.98 0-5.4-2.42-5.4-5.4 0-1.81.89-3.42 2.26-4.4-.44-.06-.9-.1-1.36-.1z"/>
+                    </svg>
+                </button>
+            </nav>
+        </header>
+
+        <div class="chat-container">
+            <aside class="sidebar">
+                <div class="sidebar-section">
+                    <h3 class="sidebar-title">Conversas Recentes</h3>
+                    <div class="chat-history-list" id="chatHistoryList">
+                        </div>
+                </div>
+                <div class="sidebar-actions">
+                    <button class="clear-all-btn" id="clearAllBtn">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/>
+                        </svg>
+                        Limpar Todas
+                    </button>
+                </div>
+            </aside>
+
+            <main class="main-chat">
+                <div class="chat-messages" id="chatMessages">
+                    <div class="welcome-screen" id="welcomeScreen">
+                        <img class="logo" src="../assets/tecnotooling.png" alt="Logo TecnoTooling">
+                        <h1 class="welcome-title">Como posso ajudar você hoje?</h1>
+                    </div>
+                </div>
+
+                <form class="input-area" id="upload-form">
+                    <div class="input-container">
+                        
+                        <label for="fileInput" class="attach-button">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                                <path d="M16.5 6v11.5c0 2.21-1.79 4-4 4s-4-1.79-4-4V5c0-1.38 1.12-2.5 2.5-2.5s2.5 1.12 2.5 2.5v10.5c0 .28-.22.5-.5.5s-.5-.22-.5-.5V6H11v9.5c0 1.38 1.12 2.5 2.5 2.5s2.5-1.12 2.5-2.5V5c0-2.21-1.79-4-4-4S7 2.79 7 5v12.5c0 3.04 2.46 5.5 5.5 5.5s5.5-2.46 5.5-5.5V6h-1.5z"/>
+                            </svg>
+                        </label>
+                        <input type="file" id="fileInput" name="arquivo" hidden>
+
+                        <textarea 
+                            class="chat-input" 
+                            id="chatInput" 
+                            name="pergunta" placeholder="Anexe um arquivo e faça uma pergunta..."
+                            rows="1"
+                        ></textarea>
+                        
+                        <button type="submit" class="send-button" id="sendButton">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                                <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/>
+                            </svg>
+                        </button>
+                    </div>
+                </form>
+            </main>
+        </div>
+    </div>
+
+    <div class="modal" id="confirmationModal">
+        <div class="modal-content">
+            <h3 id="modalTitle">Confirmar Exclusão</h3>
+            <p id="modalMessage">Tem certeza que deseja excluir esta conversa?</p>
+            <div class="modal-actions">
+                <button class="modal-btn modal-cancel" id="modalCancel">Cancelar</button>
+                <button class="modal-btn modal-confirm" id="modalConfirm">Excluir</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    
+    <script src="../chat/script.js"></script>
+</body>
+</html>
