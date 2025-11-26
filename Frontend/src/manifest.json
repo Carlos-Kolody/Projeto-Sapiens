@@ -1,0 +1,21 @@
+{
+  "name": "Sapiens - TecnoTooling",
+  "short_name": "Sapiens",
+  "start_url": "./chat/index.html",
+  "display": "standalone",
+  "background_color": "#2a2a2e",
+  "theme_color": "#3a3a40",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "assets/icon-192x192.png",
+      "type": "image/png",
+      "sizes": "192x192"
+    },
+    {
+      "src": "assets/icon-512x512.png",
+      "type": "image/png",
+      "sizes": "512x512"
+    }
+  ]
+}

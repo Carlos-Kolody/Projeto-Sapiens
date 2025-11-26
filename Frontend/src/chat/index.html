@@ -3,7 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="stylesheet" href="../chat/style.css">
+
+    <link rel="manifest" href="../manifest.json">
+    
+    <meta name="theme-color" content="#3a3a40">
+
+    <link rel="stylesheet" href="style.css">
+    
     <title>Sapiens - TecnoTooling</title>
 </head>
 <body>
@@ -29,7 +35,7 @@
                 <div class="sidebar-section">
                     <h3 class="sidebar-title">Conversas Recentes</h3>
                     <div class="chat-history-list" id="chatHistoryList">
-                        </div>
+                    </div>
                 </div>
                 <div class="sidebar-actions">
                     <button class="clear-all-btn" id="clearAllBtn">
@@ -90,6 +96,21 @@
 
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     
-    <script src="../chat/script.js"></script>
+    <script src="script.js"></script>
+
+    <script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                // Assumindo que o service-worker.js ficará na pasta raiz 'Frontend/'
+                navigator.serviceWorker.register('../service-worker.js')
+                    .then(registration => {
+                        console.log('PWA ServiceWorker registrado com sucesso:', registration.scope);
+                    })
+                    .catch(error => {
+                        console.log('PWA Falha no registro do ServiceWorker:', error);
+                    });
+            });
+        }
+    </script>
 </body>
 </html>

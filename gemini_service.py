@@ -1,3 +1,4 @@
+# gemini_service.py
 import os
 import google.generativeai as genai
 from dotenv import load_dotenv
@@ -26,8 +27,11 @@ def analisar_com_gemini(pergunta: str, arquivo_bytes: Optional[bytes], mime_type
         return "ERRO: Chave da API do Gemini não foi configurada."
 
     try:
+        # Modelo padrão para texto e RAG
+        # Usamos 'gemini-pro-latest' que também estava na sua lista
         model = genai.GenerativeModel('gemini-pro-latest')
 
+        # MODO DOCUMENTO: Se um arquivo foi enviado
         if filename and arquivo_bytes:
             print("Operando em MODO DOCUMENTO (análise temporária).")
             nome_arquivo_lower = filename.lower()
@@ -36,12 +40,16 @@ def analisar_com_gemini(pergunta: str, arquivo_bytes: Optional[bytes], mime_type
             if nome_arquivo_lower.endswith(('.png', '.jpg', '.jpeg', '.webp')):
                 print(f"Arquivo '{filename}' identificado como IMAGEM.")
                 
-                model_vision = genai.GenerativeModel('gemini-pro-vision')
+                # --- CORREÇÃO AQUI ---
+                # Usamos 'gemini-flash-latest' que apareceu na sua lista de modelos disponíveis
+                # Ele é otimizado para visão e respostas rápidas
+                model_vision = genai.GenerativeModel('gemini-flash-latest') 
+                
                 imagem = Image.open(io.BytesIO(arquivo_bytes))
                 conteudo_para_analise = [pergunta, imagem]
                 response = model_vision.generate_content(conteudo_para_analise)
 
-           
+            
             elif nome_arquivo_lower.endswith('.pdf'):
                 print(f"Arquivo '{filename}' identificado como PDF.")
                 texto_do_pdf = ""
@@ -61,7 +69,8 @@ def analisar_com_gemini(pergunta: str, arquivo_bytes: Optional[bytes], mime_type
                 PERGUNTA DO USUÁRIO: {pergunta}
                 """
                 conteudo_para_analise = [prompt_completo]
-                response = model.generate_content(conteudo_para_analise)
+                # Usa o modelo de texto padrão
+                response = model.generate_content(conteudo_para_analise) 
 
             else:
                 return f"ERRO: Formato de arquivo '{filename}' não é suportado para análise direta. Use /alimentar-ia para PDFs ou anexe uma imagem."
@@ -69,6 +78,7 @@ def analisar_com_gemini(pergunta: str, arquivo_bytes: Optional[bytes], mime_type
             return response.text
 
     
+        # MODO CONVERSA (RAG): Se nenhum arquivo foi enviado
         else:
             print("Operando em MODO CONVERSA (com memória ChromaDB).")
 
@@ -77,7 +87,6 @@ def analisar_com_gemini(pergunta: str, arquivo_bytes: Optional[bytes], mime_type
             if not contexto_encontrado:
                  print("Nenhum contexto relevante encontrado no ChromaDB.")
                  contexto_formatado = "Nenhum contexto relevante foi encontrado na base de conhecimento."
-                
             else:
                 contexto_formatado = "\n\n".join(contexto_encontrado)
                 print(f"Contexto encontrado: {contexto_formatado[:200]}...")
@@ -99,7 +108,7 @@ def analisar_com_gemini(pergunta: str, arquivo_bytes: Optional[bytes], mime_type
 
             RESPOSTA:
             """
-
+            
             response = model.generate_content(prompt_com_contexto)
             return response.text
 
