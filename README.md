@@ -110,8 +110,8 @@ pip install -r requirements.txt
 
 - [x] Implementar sistema de login e autenticação de usuários.
 - [x] Salvar o histórico de conversas em um banco de dados.
-- [ ] Suporte a mais formatos de arquivo (ex: `.docx`, `.txt`).
-- [ ] "Aterramento" em múltiplos documentos simultaneamente com um banco de dados vetorial (ex: ChromaDB, FAISS).
+- [x] Suporte a mais formatos de arquivo (ex: `.docx`, `.txt`).
+- [x] "Aterramento" em múltiplos documentos simultaneamente com um banco de dados vetorial (ex: ChromaDB, FAISS).
 - [ ] Deploy da aplicação em um serviço de nuvem (ex: Google Cloud Run, Vercel).
 
 ## 📄 Licença
