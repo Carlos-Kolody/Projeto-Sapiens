@@ -25,7 +25,10 @@ const DOM_ELEMENTS = {
   modalConfirm: document.getElementById("modalConfirm"),
   uploadForm: document.getElementById("upload-form"),
   fileInput: document.getElementById("fileInput"),
+  kbFileInput: document.getElementById("kbFileInput"),
 };
+
+const API_URL = (window.SAPIENS_CONFIG && window.SAPIENS_CONFIG.API_URL) || "http://127.0.0.1:8000";
 
 document.addEventListener("DOMContentLoaded", initApp);
 
@@ -50,11 +53,13 @@ function setupEventListeners() {
   DOM_ELEMENTS.fileInput.addEventListener("change", () => {
     if (DOM_ELEMENTS.fileInput.files.length > 0) {
       APP_STATE.attachedFile = DOM_ELEMENTS.fileInput.files[0];
-      console.log("Arquivo anexado:", APP_STATE.attachedFile.name);
+      DOM_ELEMENTS.chatInput.placeholder = `Pergunte sobre "${APP_STATE.attachedFile.name}"...`;
     } else {
       APP_STATE.attachedFile = null;
     }
   });
+
+  DOM_ELEMENTS.kbFileInput.addEventListener("change", addFileToKnowledgeBase);
 
   DOM_ELEMENTS.chatInput.addEventListener("input", autoResizeTextarea);
   DOM_ELEMENTS.newChatBtn.addEventListener("click", newChat);
@@ -80,9 +85,9 @@ async function sendMessage(event) {
 
   hideWelcomeScreen();
 
-  let userMessageContent = message;
+  let userMessageContent = escapeHtml(message);
   if (file) {
-    userMessageContent += `<br><small><em>Arquivo anexado: ${file.name}</em></small>`;
+    userMessageContent += `<br><small><em>Arquivo anexado: ${escapeHtml(file.name)}</em></small>`;
   }
 
   addMessage(userMessageContent, "user");
@@ -91,6 +96,7 @@ async function sendMessage(event) {
   DOM_ELEMENTS.chatInput.value = "";
   DOM_ELEMENTS.uploadForm.reset();
   APP_STATE.attachedFile = null;
+  DOM_ELEMENTS.chatInput.placeholder = "Pergunte algo sobre os documentos da base, ou anexe um arquivo...";
   resetTextareaHeight();
 
   await getAIResponse(formData);
@@ -101,7 +107,7 @@ async function getAIResponse(formData) {
   addTypingIndicator();
 
   try {
-    const response = await fetch("http://127.0.0.1:8000/analisar", {
+    const response = await fetch(`${API_URL}/analisar`, {
       method: "POST",
       body: formData,
     });
@@ -114,7 +120,7 @@ async function getAIResponse(formData) {
     }
 
     const result = await response.json();
-    const aiResponse = result.resposta;
+    const aiResponse = result.resposta + formatSources(result.fontes);
 
     addMessage(aiResponse, "ai");
     saveMessageToConversation(aiResponse, "ai");
@@ -127,6 +133,60 @@ async function getAIResponse(formData) {
   } finally {
     APP_STATE.isWaitingForResponse = false;
   }
+}
+
+/**
+ * Monta o rodapé "Fontes" da resposta, sem repetir arquivo/página.
+ */
+function formatSources(fontes) {
+  if (!fontes || fontes.length === 0) return "";
+  const vistos = new Set();
+  const itens = [];
+  for (const f of fontes) {
+    const rotulo = f.pagina ? `${f.arquivo} (p. ${f.pagina})` : f.arquivo;
+    if (!vistos.has(rotulo)) {
+      vistos.add(rotulo);
+      itens.push(rotulo);
+    }
+  }
+  return `\n\n---\n**Fontes:** ${itens.join(" · ")}`;
+}
+
+/**
+ * Envia um PDF para a base de conhecimento (/alimentar-ia).
+ */
+async function addFileToKnowledgeBase() {
+  const file = DOM_ELEMENTS.kbFileInput.files[0];
+  DOM_ELEMENTS.kbFileInput.value = "";
+  if (!file || APP_STATE.isWaitingForResponse) return;
+
+  hideWelcomeScreen();
+  const userMsg = `<small><em>Adicionando à base de conhecimento: ${escapeHtml(file.name)}</em></small>`;
+  addMessage(userMsg, "user");
+  saveMessageToConversation(userMsg, "user");
+
+  APP_STATE.isWaitingForResponse = true;
+  addTypingIndicator();
+
+  const formData = new FormData();
+  formData.append("arquivo", file);
+
+  let reply;
+  try {
+    const response = await fetch(`${API_URL}/alimentar-ia`, { method: "POST", body: formData });
+    const data = await response.json();
+    reply = response.ok
+      ? `✅ ${data.mensagem}\n\nAgora você pode perguntar sobre ele sem anexar o arquivo.`
+      : `⚠️ Não consegui adicionar o documento: ${data.detail}`;
+  } catch (error) {
+    reply = `⚠️ Não consegui falar com o backend. Verifique se ele está rodando. (${error.message})`;
+  } finally {
+    removeTypingIndicator();
+    APP_STATE.isWaitingForResponse = false;
+  }
+
+  addMessage(reply, "ai");
+  saveMessageToConversation(reply, "ai");
 }
 
 function hideWelcomeScreen() {
@@ -145,7 +205,7 @@ function addMessage(content, sender) {
   messageContentDiv.className = "message-content";
 
   if (sender === "ai") {
-    messageContentDiv.innerHTML = marked.parse(content);
+    messageContentDiv.innerHTML = DOMPurify.sanitize(marked.parse(content));
   } else {
     messageContentDiv.innerHTML = content;
   }

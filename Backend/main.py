@@ -1,61 +1,114 @@
-# main.py
-from fastapi import FastAPI, File, UploadFile, Form, HTTPException
-from fastapi.responses import JSONResponse
-from fastapi.middleware.cors import CORSMiddleware
-import gemini_service # <-- Garanta que esta linha de importação existe
+import os
 
-# --- Configuração do Servidor Web ---
+from dotenv import load_dotenv
+from fastapi import FastAPI, File, Form, HTTPException, UploadFile
+from fastapi.middleware.cors import CORSMiddleware
+from pydantic import BaseModel
+from typing import Optional
+
+import gemini_service
+import vector_store
+from gemini_service import SapiensError
+
+load_dotenv()
+
 app = FastAPI(
     title="Projeto Sapiens API",
-    description="API para conectar o frontend com a IA do Gemini.",
-    version="1.0.0"
+    description="API do Sapiens: chat com IA (Gemini), autenticação e base de conhecimento vetorial (ChromaDB).",
+    version="1.2.0",
 )
 
-# Configuração do CORS para permitir a comunicação com o frontend
+# Origens permitidas separadas por vírgula no .env (CORS_ORIGINS). Padrão: Live Server do VS Code.
 origins = [
-    "http://127.0.0.1:5500", 
-    "http://localhost:5500",
-    # Adicione outras origens se necessário
-] 
+    o.strip()
+    for o in os.getenv("CORS_ORIGINS", "http://127.0.0.1:5500,http://localhost:5500").split(",")
+    if o.strip()
+]
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=origins, 
-    allow_credentials=True, 
-    allow_methods=["*"], 
+    allow_origins=origins,
+    allow_credentials=True,
+    allow_methods=["*"],
     allow_headers=["*"],
 )
-# ------------------------------------
 
-# Endpoint de teste para verificar se a API está no ar
+
+class LoginCredentials(BaseModel):
+    email: str
+    password: str
+    accessLevel: str
+
+
+# TODO: substituir por usuários no banco + senha com hash + JWT (próxima etapa).
+VALID_CREDENTIALS = {
+    "premium": {"email": "administrativo@tecnotooling.com.br", "password": "123456"},
+    "standard": {"email": "operacional@tecnotooling.com.br", "password": "123456"},
+}
+
+
 @app.get("/")
 def read_root():
-    return {"status": "API do Projeto Sapiens está online!"}
+    return {"status": "API do Projeto Sapiens está online!", "documentos_na_base": vector_store.collection.count()}
 
 
-# --- ESTE É O ENDPOINT QUE ESTAVA FALTANDO OU COM ERRO ---
-# Verifique se o seu código tem EXATAMENTE esta parte
-# Dentro do arquivo: main.py
+@app.post("/login")
+def login_handler(credentials: LoginCredentials):
+    valid_user = VALID_CREDENTIALS.get(credentials.accessLevel)
+    if valid_user and valid_user["email"] == credentials.email and valid_user["password"] == credentials.password:
+        return {"message": "Login bem-sucedido!", "accessLevel": credentials.accessLevel}
+    raise HTTPException(status_code=401, detail="Credenciais inválidas. Verifique seu e-mail e senha.")
 
-# ... (todo o resto do código continua igual) ...
 
-# Dentro de main.py
 @app.post("/analisar")
 async def analisar_documento(
     pergunta: str = Form(...),
-    arquivo: UploadFile = File(...)
+    arquivo: Optional[UploadFile] = File(None),
 ):
+    """
+    Com arquivo: analisa só aquele arquivo (não salva na base).
+    Sem arquivo: responde usando a base de conhecimento (RAG) e devolve as fontes usadas.
+    """
+    conteudo = await arquivo.read() if arquivo and arquivo.filename else None
+    nome = arquivo.filename if conteudo else None
+
     try:
-        conteudo_arquivo_bytes = await arquivo.read()
-        
-        # A linha mais importante: passando o 'arquivo.filename'
-        resultado = gemini_service.analisar_com_gemini(
-            pergunta=pergunta,
-            arquivo_bytes=conteudo_arquivo_bytes,
-            mime_type=arquivo.content_type,
-            filename=arquivo.filename # <--- Esta parte precisa estar aqui
-        )
-
-        return JSONResponse(content={"resposta": resultado})
-
+        return gemini_service.analisar_com_gemini(pergunta=pergunta, arquivo_bytes=conteudo, filename=nome)
+    except SapiensError as e:
+        raise HTTPException(status_code=400, detail=str(e))
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Ocorreu um erro interno no servidor: {e}")
+        print(f"Erro em /analisar: {e!r}")
+        raise HTTPException(status_code=500, detail=f"Erro ao processar a solicitação com a IA: {e}")
+
+
+@app.post("/alimentar-ia")
+async def alimentar_ia_com_documento(arquivo: UploadFile = File(...)):
+    """Recebe um PDF e o adiciona (ou atualiza) na base de conhecimento."""
+    if not arquivo.filename.lower().endswith(".pdf"):
+        raise HTTPException(status_code=400, detail="Apenas PDFs são aceitos para alimentar a base.")
+
+    conteudo = await arquivo.read()
+    try:
+        resultado = vector_store.adicionar_documento_ao_banco(conteudo, arquivo.filename)
+    except ValueError as e:
+        raise HTTPException(status_code=422, detail=str(e))
+    except Exception as e:
+        print(f"Erro em /alimentar-ia: {e!r}")
+        raise HTTPException(status_code=500, detail=f"Erro durante a ingestão do documento: {e}")
+
+    return {
+        "status": "sucesso",
+        "mensagem": f"'{resultado['arquivo']}' aprendido: {resultado['chunks']} trechos de {resultado['paginas']} páginas.",
+        **resultado,
+    }
+
+
+@app.get("/documentos")
+def listar_documentos():
+    """Lista os documentos que estão na base de conhecimento."""
+    return {"documentos": vector_store.listar_documentos()}
+
+
+@app.delete("/documentos/{filename}")
+def remover_documento(filename: str):
+    vector_store.remover_documento(filename)
+    return {"status": "removido", "arquivo": filename}

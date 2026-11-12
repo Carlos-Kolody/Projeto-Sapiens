@@ -1,68 +1,121 @@
-# cole isso dentro de backend/gemini_service.py
+"""
+Lógica de IA do Sapiens.
 
+Dois modos:
+1. Modo Documento: arquivo anexado junto com a pergunta (análise pontual, não salva na base).
+2. Modo Conversa (RAG): só a pergunta -> busca contexto no ChromaDB e responde citando as fontes.
+"""
+import io
 import os
+from typing import Optional
+
 import google.generativeai as genai
+import PyPDF2
 from dotenv import load_dotenv
 from PIL import Image
-import io
-import PyPDF2
 
-# --- Configuração Inicial ---
+import vector_store
+
 load_dotenv()
 api_key = os.getenv("GEMINI_API_KEY")
-
 if api_key:
     genai.configure(api_key=api_key)
 else:
-    print("AVISO: Chave da API do Gemini não encontrada no arquivo .env")
-# ---------------------------
+    print("AVISO: GEMINI_API_KEY não encontrada no arquivo .env")
 
-# MODIFICADO: A função agora aceita 'filename' como um novo parâmetro
-def analisar_com_gemini(pergunta: str, arquivo_bytes: bytes, mime_type: str, filename: str):
-    """
-    Função especialista em analisar uma pergunta e um arquivo usando o Gemini.
-    Agora usa a extensão do nome do arquivo para mais confiabilidade.
-    """
+TEXT_MODEL = os.getenv("GEMINI_TEXT_MODEL", "gemini-pro-latest")
+VISION_MODEL = os.getenv("GEMINI_VISION_MODEL", "gemini-flash-latest")
+
+EXTENSOES_IMAGEM = (".png", ".jpg", ".jpeg", ".webp")
+
+
+class SapiensError(Exception):
+    """Erro esperado (entrada inválida, configuração faltando) com mensagem amigável."""
+
+
+def _extrair_texto_pdf(arquivo_bytes: bytes) -> str:
+    leitor = PyPDF2.PdfReader(io.BytesIO(arquivo_bytes))
+    return "\n".join(
+        f"[Página {i}]\n{pagina.extract_text() or ''}" for i, pagina in enumerate(leitor.pages, start=1)
+    )
+
+
+def _analisar_arquivo(pergunta: str, arquivo_bytes: bytes, filename: str) -> dict:
+    nome = filename.lower()
+
+    if nome.endswith(EXTENSOES_IMAGEM):
+        imagem = Image.open(io.BytesIO(arquivo_bytes))
+        prompt = (
+            "Você é Sapiens, assistente técnico da TecnoTooling. Analise a imagem "
+            "(pode ser um desenho técnico, planta ou foto de peça) e responda à pergunta. "
+            "Se citar cotas, tolerâncias ou materiais, diga exatamente onde aparecem no desenho. "
+            "Se algo não estiver legível, diga isso em vez de supor.\n\n"
+            f"PERGUNTA: {pergunta}"
+        )
+        response = genai.GenerativeModel(VISION_MODEL).generate_content([prompt, imagem])
+        return {"resposta": response.text, "fontes": [{"arquivo": filename}]}
+
+    if nome.endswith(".pdf"):
+        texto = _extrair_texto_pdf(arquivo_bytes)
+        prompt = f"""
+Analise o documento a seguir e responda à pergunta do usuário com base nele.
+Não adicione informações que não estejam no documento. Quando possível, indique a página.
+
+DOCUMENTO ({filename}):
+---
+{texto}
+---
+
+PERGUNTA DO USUÁRIO: {pergunta}
+"""
+        response = genai.GenerativeModel(TEXT_MODEL).generate_content(prompt)
+        return {"resposta": response.text, "fontes": [{"arquivo": filename}]}
+
+    raise SapiensError(
+        f"Formato de '{filename}' não suportado para análise direta. Envie PDF ou imagem (PNG/JPG/WEBP)."
+    )
+
+
+def _responder_com_base(pergunta: str) -> dict:
+    trechos = vector_store.consultar_banco_de_dados(pergunta)
+
+    if not trechos:
+        contexto = "Nenhum trecho relevante foi encontrado na base de conhecimento."
+    else:
+        contexto = "\n\n".join(
+            f"[Fonte {i}: {t['arquivo']}, p. {t['pagina']}]\n{t['texto']}" for i, t in enumerate(trechos, start=1)
+        )
+
+    prompt = f"""
+Você é Sapiens, um assistente prestativo da TecnoTooling.
+Responda à pergunta do usuário usando EXCLUSIVAMENTE o contexto abaixo, extraído da base de conhecimento da empresa.
+Ao usar uma informação, cite a fonte no formato [Fonte N].
+Se o contexto não for suficiente, diga educadamente que não encontrou essa informação nos documentos disponíveis.
+Não invente respostas.
+
+CONTEXTO:
+---
+{contexto}
+---
+
+PERGUNTA DO USUÁRIO: {pergunta}
+
+RESPOSTA:
+"""
+    response = genai.GenerativeModel(TEXT_MODEL).generate_content(prompt)
+    fontes = [{"arquivo": t["arquivo"], "pagina": t["pagina"]} for t in trechos]
+    return {"resposta": response.text, "fontes": fontes}
+
+
+def analisar_com_gemini(
+    pergunta: str,
+    arquivo_bytes: Optional[bytes] = None,
+    filename: Optional[str] = None,
+) -> dict:
+    """Ponto de entrada usado pela API. Retorna {"resposta": str, "fontes": list}."""
     if not api_key:
-        return "ERRO: Chave da API do Gemini não foi configurada. Verifique seu arquivo .env no backend."
+        raise SapiensError("A chave da API do Gemini não foi configurada no .env do Backend.")
 
-    try:
-        model = genai.GenerativeModel('gemini-pro-latest')
-        
-        # Transforma o nome do arquivo em minúsculas para a verificação
-        nome_arquivo_lower = filename.lower()
-        conteudo_para_analise = []
-
-        # MODIFICADO: A lógica agora se baseia na extensão do arquivo
-        if nome_arquivo_lower.endswith(('.png', '.jpg', '.jpeg', '.webp')):
-            print(f"Arquivo '{filename}' identificado como IMAGEM.")
-            imagem = Image.open(io.BytesIO(arquivo_bytes))
-            conteudo_para_analise = [pergunta, imagem]
-            
-        elif nome_arquivo_lower.endswith('.pdf'):
-            print(f"Arquivo '{filename}' identificado como PDF.")
-            texto_do_pdf = ""
-            leitor_pdf = PyPDF2.PdfReader(io.BytesIO(arquivo_bytes))
-            for pagina in leitor_pdf.pages:
-                texto_do_pdf += pagina.extract_text() or ""
-            
-            prompt_completo = f"""
-            Analise o documento de texto a seguir e responda à pergunta do usuário com base nele.
-
-            DOCUMENTO:
-            ---
-            {texto_do_pdf}
-            ---
-
-            PERGUNTA DO USUÁRIO: {pergunta}
-            """
-            conteudo_para_analise = [prompt_completo]
-        else:
-            return f"ERRO: Formato de arquivo '{filename}' não é suportado. Por favor, envie um arquivo de imagem (PNG, JPG) ou PDF."
-
-        response = model.generate_content(conteudo_para_analise)
-        return response.text
-
-    except Exception as e:
-        print(f"Ocorreu um erro ao chamar a API do Gemini: {e}")
-        return f"ERRO: Não foi possível processar sua solicitação com a IA. Detalhes: {e}"
+    if filename and arquivo_bytes:
+        return _analisar_arquivo(pergunta, arquivo_bytes, filename)
+    return _responder_com_base(pergunta)

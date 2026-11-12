@@ -10,3 +10,5 @@ node_modules/
 dist/
 build/
 .npm/
+# Banco vetorial local (gerado em tempo de execução)
+chroma_db_store/
