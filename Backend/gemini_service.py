@@ -103,7 +103,7 @@ PERGUNTA DO USUÁRIO: {pergunta}
 RESPOSTA:
 """
     response = genai.GenerativeModel(TEXT_MODEL).generate_content(prompt)
-    fontes = [{"arquivo": t["arquivo"], "pagina": t["pagina"]} for t in trechos]
+    fontes = [{"arquivo": t["arquivo"], "pagina": t["pagina"], "trecho": t["texto"][:600]} for t in trechos]
     return {"resposta": response.text, "fontes": fontes}
 
 

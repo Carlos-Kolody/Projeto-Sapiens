@@ -3,7 +3,7 @@
 ![Status](https://img.shields.io/badge/status-em--desenvolvimento-yellow)
 ![Python](https://img.shields.io/badge/Python-3.9%2B-blue?logo=python)
 ![Framework](https://img.shields.io/badge/Framework-FastAPI-green?logo=fastapi)
-![Frontend](https://img.shields.io/badge/Frontend-HTML%2FCSS%2FJS-orange)
+![Frontend](https://img.shields.io/badge/Frontend-React%20%2B%20Vite-61dafb?logo=react)
 
 Sapiens é um protótipo de um assistente virtual inteligente, projetado para resolver o problema de perda de conhecimento em ambientes corporativos. A aplicação centraliza documentos internos (texto e desenhos técnicos) e permite que os usuários façam perguntas em linguagem natural, recebendo respostas precisas e contextuais geradas por uma IA multimodal de ponta.
 
@@ -11,8 +11,8 @@ Sapiens é um protótipo de um assistente virtual inteligente, projetado para re
 
 ## ✨ Funcionalidades Principais
 
-* **Interface de Chat Interativa:** interface limpa e responsiva (PWA) com histórico de conversas no navegador e tema claro/escuro.
-* **Base de Conhecimento (RAG):** PDFs adicionados à base (botão 📘 no chat) são divididos em trechos, vetorizados e guardados no ChromaDB. Perguntas sem anexo são respondidas com base neles, **citando arquivo e página**.
+* **Interface de ferramenta técnica:** conversas à esquerda, chat no centro e painel da base de conhecimento à direita, com tema claro/escuro e layout responsivo.
+* **Base de Conhecimento (RAG):** PDFs adicionados pelo painel da base (arraste e solte; perfil Administrativo) são divididos em trechos, vetorizados e guardados no ChromaDB. Perguntas sem anexo são respondidas com base neles, **citando arquivo e página** — clicar numa fonte mostra o trecho usado.
 * **Análise Pontual de Documentos:** anexe um `.pdf` só para uma pergunta, sem salvá-lo na base.
 * **Interpretação de Desenhos Técnicos:** análise multimodal de imagens de blueprints e plantas (`.jpg`, `.png`, `.webp`).
 
@@ -22,9 +22,9 @@ Sapiens é um protótipo de um assistente virtual inteligente, projetado para re
 | :--- | :--- |
 | **Inteligência Artificial** | Google Gemini API (`gemini-pro-latest`) |
 | **Backend** | Python 3.9+, FastAPI, Uvicorn |
-| **Frontend** | HTML5, CSS3, JavaScript |
+| **Frontend** | React 19, TypeScript, Vite, react-markdown, lucide-react |
 | **Banco Vetorial** | ChromaDB (persistido em `Backend/chroma_db_store/`) |
-| **Bibliotecas Principais**| `google-generativeai`, `python-dotenv`, `PyPDF2`, `Pillow`, `marked.js`, `DOMPurify` |
+| **Bibliotecas Principais**| `google-generativeai`, `python-dotenv`, `PyPDF2`, `Pillow` |
 
 ## 🚀 Como Executar o Projeto
 
@@ -32,6 +32,7 @@ Siga os passos abaixo para rodar o Sapiens na sua máquina local.
 
 #### **Pré-requisitos**
 * [Python 3.9+](https://www.python.org/downloads/)
+* [Node.js 20+](https://nodejs.org/)
 * [Git](https://git-scm.com/)
 
 #### **1. Clone o Repositório**
@@ -72,15 +73,19 @@ pip install -r requirements.txt
 * O servidor estará rodando em `http://127.0.0.1:8000`. Deixe este terminal aberto.
 
 #### **5. Inicie o Frontend**
-* Abra uma **nova janela do terminal** ou use o seu editor de código (como o VS Code com a extensão "Live Server").
-* Abra o arquivo `Frontend/src/login/index.html` com o Live Server.
-* Se o backend estiver em outro endereço, ajuste `API_URL` em `Frontend/src/config.js`.
-* Seu navegador abrirá no endereço `http://127.0.0.1:5500` (ou similar).
+Em **outro terminal**:
+```bash
+cd Frontend
+npm install
+npm run dev
+```
+* Abra `http://localhost:5173` no navegador.
+* Se o backend estiver em outro endereço, copie `Frontend/.env.example` para `Frontend/.env` e ajuste `VITE_API_URL`.
 
 ## Uso
 
-1.  Faça login com um dos usuários de teste (`usuario@sapiens.dev` (padrão) ou `admin@sapiens.dev` (premium), senha `123456`).
-2.  **Para alimentar a base:** clique no ícone 📘 e escolha um PDF. Depois disso, pergunte sobre ele sem anexar nada.
+1.  Faça login com um dos usuários de teste, escolhendo o perfil correspondente: **Operacional** → `usuario@sapiens.dev`, **Administrativo** → `admin@sapiens.dev` (senha `123456` para os dois).
+2.  **Para alimentar a base (Administrativo):** arraste PDFs para o painel da direita. Depois, é só perguntar, sem anexar nada.
 3.  **Para uma pergunta pontual:** clique no clipe, anexe um `.pdf` ou imagem e faça a pergunta.
 
 ### Endpoints da API
@@ -103,22 +108,25 @@ A documentação interativa fica em `http://127.0.0.1:8000/docs`.
 |   |-- main.py             # API FastAPI (rotas)
 |   |-- gemini_service.py   # Lógica da IA (modo documento e modo RAG)
 |   |-- vector_store.py     # Ingestão e busca no ChromaDB
-|   |-- teste_direto.py     # Script para listar os modelos disponíveis na sua chave
+|   |-- teste_direto.py     # Lista os modelos disponíveis na sua chave
 |   |-- requirements.txt
 |   `-- .env.example
-`-- Frontend/src/
-    |-- config.js           # URL da API
-    |-- login/              # Tela de login
-    |-- chat/               # Tela principal do chat
-    |-- assets/
-    |-- manifest.json
-    `-- service-worker.js
+`-- Frontend/               # React + TypeScript + Vite
+    |-- public/             # logo, ícones, manifest
+    |-- src/
+    |   |-- api.ts          # chamadas ao backend
+    |   |-- storage.ts      # sessão, tema e conversas (localStorage)
+    |   |-- App.tsx
+    |   `-- components/     # LoginScreen, Workspace, Sidebar, ChatView, KnowledgePanel
+    |-- package.json
+    `-- .env.example
 ```
 
 ## 🔮 Melhorias Futuras
 
 - [x] Base de conhecimento com banco vetorial (ChromaDB) e citação de fontes.
-- [ ] Autenticação real (usuários no banco, senha com hash, JWT) e níveis de acesso com efeito.
+- [x] Novo frontend em React + TypeScript com painel da base e fontes clicáveis.
+- [ ] Autenticação real (usuários no banco, senha com hash, JWT); hoje a restrição do perfil Operacional é só na interface.
 - [ ] Histórico de conversas no servidor (hoje fica no `localStorage`).
 - [ ] Suporte a `.docx` e `.txt` na base de conhecimento.
 - [ ] OCR para PDFs escaneados.
