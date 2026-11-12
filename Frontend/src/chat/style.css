@@ -75,8 +75,32 @@ body.light-theme {
 }
 
 .logo {
-    height: 40px; /* Controla altura para não quebrar layout */
-    width: auto;
+    height: 36px;
+    width: 36px;
+    border-radius: 8px;
+}
+
+.header-logo {
+    gap: 0.75rem;
+}
+
+.brand-name {
+    font-size: 1.35rem;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+    color: var(--color-white);
+}
+
+.light-theme .brand-name {
+    color: var(--color-dark-blue);
+}
+
+.welcome-logo {
+    width: 96px;
+    height: 96px;
+    border-radius: 22px;
+    margin-bottom: 1.5rem;
+    box-shadow: 0 8px 24px rgba(43, 181, 201, 0.25);
 }
 
 .header-nav {

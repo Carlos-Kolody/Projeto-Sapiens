@@ -1,6 +1,6 @@
 // Network-first: tenta buscar a versão mais nova; usa o cache só se estiver offline.
 // (O cache-first anterior fazia o navegador continuar servindo JS antigo depois de atualizações.)
-const CACHE_NAME = 'sapiens-v2';
+const CACHE_NAME = 'sapiens-v3';
 const urlsToCache = [
   './config.js',
   './login/index.html',
@@ -9,7 +9,7 @@ const urlsToCache = [
   './chat/index.html',
   './chat/style.css',
   './chat/script.js',
-  './assets/tecnotooling.png',
+  './assets/logo.svg',
   './assets/icon-192x192.png',
   './assets/icon-512x512.png'
 ];

@@ -36,12 +36,12 @@ body {
 }
 
 .logo-img{
-    width: 350px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    filter: brightness(0) invert(1);
-    margin-bottom: 1rem;
+    width: 88px;
+    height: 88px;
+    display: block;
+    margin: 0 auto 1rem;
+    border-radius: 20px;
+    box-shadow: 0 8px 24px rgba(43, 181, 201, 0.25);
 }
 
 .login-screen.hidden {
@@ -235,7 +235,8 @@ body {
     }
     
     .logo-img {
-        width: 280px;
+        width: 76px;
+        height: 76px;
     }
 }
 
@@ -258,7 +259,8 @@ body {
     }
     
     .logo-img {
-        width: 250px;
+        width: 64px;
+        height: 64px;
         margin-bottom: 0.75rem;
     }
     

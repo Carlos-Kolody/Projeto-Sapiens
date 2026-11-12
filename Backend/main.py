@@ -41,8 +41,8 @@ class LoginCredentials(BaseModel):
 
 # TODO: substituir por usuários no banco + senha com hash + JWT (próxima etapa).
 VALID_CREDENTIALS = {
-    "premium": {"email": "administrativo@tecnotooling.com.br", "password": "123456"},
-    "standard": {"email": "operacional@tecnotooling.com.br", "password": "123456"},
+    "premium": {"email": "admin@sapiens.dev", "password": "123456"},
+    "standard": {"email": "usuario@sapiens.dev", "password": "123456"},
 }
 
 

@@ -79,7 +79,7 @@ pip install -r requirements.txt
 
 ## Uso
 
-1.  Faça login com um dos usuários de teste (`operacional@tecnotooling.com.br` ou `administrativo@tecnotooling.com.br`, senha `123456`).
+1.  Faça login com um dos usuários de teste (`usuario@sapiens.dev` (padrão) ou `admin@sapiens.dev` (premium), senha `123456`).
 2.  **Para alimentar a base:** clique no ícone 📘 e escolha um PDF. Depois disso, pergunte sobre ele sem anexar nada.
 3.  **Para uma pergunta pontual:** clique no clipe, anexe um `.pdf` ou imagem e faça a pergunta.
 

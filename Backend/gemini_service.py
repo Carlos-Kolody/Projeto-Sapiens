@@ -46,7 +46,7 @@ def _analisar_arquivo(pergunta: str, arquivo_bytes: bytes, filename: str) -> dic
     if nome.endswith(EXTENSOES_IMAGEM):
         imagem = Image.open(io.BytesIO(arquivo_bytes))
         prompt = (
-            "Você é Sapiens, assistente técnico da TecnoTooling. Analise a imagem "
+            "Você é Sapiens, um assistente técnico. Analise a imagem "
             "(pode ser um desenho técnico, planta ou foto de peça) e responda à pergunta. "
             "Se citar cotas, tolerâncias ou materiais, diga exatamente onde aparecem no desenho. "
             "Se algo não estiver legível, diga isso em vez de supor.\n\n"
@@ -87,8 +87,8 @@ def _responder_com_base(pergunta: str) -> dict:
         )
 
     prompt = f"""
-Você é Sapiens, um assistente prestativo da TecnoTooling.
-Responda à pergunta do usuário usando EXCLUSIVAMENTE o contexto abaixo, extraído da base de conhecimento da empresa.
+Você é Sapiens, um assistente de conhecimento prestativo.
+Responda à pergunta do usuário usando EXCLUSIVAMENTE o contexto abaixo, extraído da base de conhecimento.
 Ao usar uma informação, cite a fonte no formato [Fonte N].
 Se o contexto não for suficiente, diga educadamente que não encontrou essa informação nos documentos disponíveis.
 Não invente respostas.
